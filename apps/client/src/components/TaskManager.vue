@@ -4,7 +4,7 @@ import { ref } from "vue";
 
 const props = defineProps({
     manageType: String, // add, edit
-    currentId: Number,
+    currentId: String,
     currentTitle: String,
     currentDescription: String,
     currentType: String,

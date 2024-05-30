@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 defineProps({
-    id: Number,
+    id: String,
     title: String,
     description: String,
     type: String, // todo, progress, done

@@ -6,7 +6,7 @@ import { findChangedProperties } from "./utils";
 import { getTasks, updateTask, type ITask, deleteTask } from "./api";
 
 const managingTask = reactive({
-    id: 0,
+    id: "0",
     type: "none", // none, add, edit
 });
 
@@ -31,7 +31,7 @@ const tasks = ref(await getTasks());
 /**
  * This function will handle the movement of a task between the types.
  */
-const handleTaskMove = async (id: number, newType: ITask["type"]) => {
+const handleTaskMove = async (id: string, newType: ITask["type"]) => {
     const task = tasks.value.find((f) => f.id === id);
     if (task) {
         await updateTask(id, {
@@ -44,7 +44,7 @@ const handleTaskMove = async (id: number, newType: ITask["type"]) => {
 /**
  * This function will handle the deletion of a task.
  */
-const handleTaskDelete = async (id: number) => {
+const handleTaskDelete = async (id: string) => {
     const index = tasks.value.findIndex((f) => f.id === id);
     if (index === -1) return;
     await deleteTask(id);

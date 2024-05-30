@@ -18,7 +18,7 @@ export const getTasks = async (): Promise<ITask[]> => {
 
 // UPDATE
 export const updateTask = async (
-    taskId: number,
+    taskId: string,
     taskPayload: IUpdateTaskPayload
 ): Promise<ITask> => {
     const task = await axios.put(`/tasks/${taskId}`, taskPayload);
@@ -26,13 +26,13 @@ export const updateTask = async (
 };
 
 // DELETE
-export const deleteTask = async (taskId: number) => {
+export const deleteTask = async (taskId: string) => {
     await axios.delete(`/tasks/${taskId}`);
 };
 
 // Some interfaces for type-safety
 export interface ITask {
-    id: number;
+    id: string;
     type: "todo" | "progress" | "done";
     title: string;
     description: string;
