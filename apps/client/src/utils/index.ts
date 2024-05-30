@@ -23,5 +23,9 @@ export const findChangedProperties = (original: any, modified: any) => {
         }
     }
 
-    return changedProperties;
+    return Object.entries(changedProperties).reduce((acc, [key, value]) => {
+        // @ts-ignore
+        if (value.newValue !== value.oldValue) acc[key] = value.newValue;
+        return acc;
+    }, {});
 };
