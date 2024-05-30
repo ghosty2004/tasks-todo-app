@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+  client:
+    build: 
+      context: ./apps/client
+      args:
+        VITE_API_ENDPOINT_URL: ${CLIENT_API_ENDPOINT_URL}
+    container_name: client
+    networks:
+      - task-todo-app
+
+  server:
+    build: ./apps/server
+    container_name: server
+    environment:
+      - LISTEN_PORT=3000
+      - MONGODB_URL=${SERVER_MONGODB_URL}
+    networks:
+      - task-todo-app
+
+  database:
+    image: mongo:7.0.11
+    container_name: database
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    networks:
+      - task-todo-app
+
+  nginx:
+    image: nginx:1.21.3-alpine
+    container_name: nginx
+    depends_on:
+      - client
+      - server
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - task-todo-app
+
+networks:
+  task-todo-app:
+    driver: bridge
