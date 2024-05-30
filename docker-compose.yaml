@@ -13,6 +13,8 @@ services:
   server:
     build: ./apps/server
     container_name: server
+    depends_on:
+      - database
     environment:
       - LISTEN_PORT=3000
       - MONGODB_URL=${SERVER_MONGODB_URL}
@@ -22,11 +24,10 @@ services:
   database:
     image: mongo:7.0.11
     container_name: database
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: rootpassword
     networks:
       - task-todo-app
+    volumes:
+      - mongodb_data:/data/db
 
   nginx:
     image: nginx:1.21.3-alpine
@@ -44,3 +45,6 @@ services:
 networks:
   task-todo-app:
     driver: bridge
+
+volumes:
+  mongodb_data:
