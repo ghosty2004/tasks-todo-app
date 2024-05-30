@@ -1,9 +1,16 @@
 <script lang="ts" setup>
-import { ref, reactive } from "vue";
+import { reactive } from "vue";
 import TaskCard from "./components/TaskCard.vue";
 import TaskManager from "./components/TaskManager.vue";
 import { findChangedProperties } from "./utils";
-import { getTasks, updateTask, type ITask, deleteTask } from "./api";
+import {
+    getTasks,
+    updateTask,
+    type ITask,
+    deleteTask,
+    createTask,
+} from "./api";
+import useApiCall from "./hooks/useApiCall";
 
 const managingTask = reactive({
     id: "0",
@@ -26,18 +33,19 @@ const types = [
     },
 ];
 
-const tasks = ref(await getTasks());
+const { data: tasks } = useApiCall(getTasks);
 
 /**
  * This function will handle the movement of a task between the types.
  */
 const handleTaskMove = async (id: string, newType: ITask["type"]) => {
+    if (!tasks?.value) return;
     const task = tasks.value.find((f) => f.id === id);
     if (task) {
-        await updateTask(id, {
+        const { type } = await updateTask(id, {
             type: newType,
         });
-        task.type = newType;
+        task.type = type;
     }
 };
 
@@ -45,6 +53,7 @@ const handleTaskMove = async (id: string, newType: ITask["type"]) => {
  * This function will handle the deletion of a task.
  */
 const handleTaskDelete = async (id: string) => {
+    if (!tasks?.value) return;
     const index = tasks.value.findIndex((f) => f.id === id);
     if (index === -1) return;
     await deleteTask(id);
@@ -54,25 +63,31 @@ const handleTaskDelete = async (id: string) => {
 /**
  * This funciton will handle the completion of the task management.
  */
-const handleTaskManageComplete = (payload: any) => {
-    const { manageType } = payload;
+const handleTaskManageComplete = async (payload: any) => {
+    if (!tasks?.value) return;
+
+    const { manageType, ...payloadV2 } = payload;
 
     switch (manageType) {
         case "add":
+            const newTask = await createTask(payloadV2);
+            tasks.value.push(newTask);
             break;
         case "edit":
-            const currentFields = tasks.value.find(
-                (f) => f.id === managingTask.id
-            );
+            const { currentId, ...rest } = payloadV2;
 
-            const { manageType, currentId: id, ...rest } = payload;
+            const task = tasks.value.find((f) => f.id === currentId);
 
-            const changedProperties = findChangedProperties(
-                currentFields,
-                rest
-            );
+            const changedProperties = findChangedProperties(task, rest);
 
-            console.log("changedProperties", id, changedProperties);
+            if (Object.keys(changedProperties).length === 0) return;
+
+            await updateTask(currentId, changedProperties);
+
+            Object.entries(changedProperties).forEach(([key, value]) => {
+                // @ts-ignore
+                task[key] = value;
+            });
             break;
     }
 
@@ -106,7 +121,7 @@ const handleTaskManageComplete = (payload: any) => {
                 <h2 class="font-semibold">{{ name }}</h2>
                 <div class="flex flex-col gap-2">
                     <TaskCard
-                        v-for="task in tasks.filter((f) => f.type === type)"
+                        v-for="task in tasks?.filter((f) => f.type === type)"
                         :key="task.id"
                         :id="task.id"
                         :title="task.title"
@@ -128,9 +143,9 @@ const handleTaskManageComplete = (payload: any) => {
         v-if="managingTask.type !== 'none'"
         :manage-type="managingTask.type"
         :current-id="managingTask.id"
-        :current-title="managingTask.type === 'edit' ? tasks.find((f) => f.id === managingTask.id)!.title : ''"
-        :current-description="managingTask.type === 'edit' ? tasks.find((f) => f.id === managingTask.id)!.description : ''"
-        :current-type="managingTask.type === 'edit' ? tasks.find((f) => f.id === managingTask.id)!.type : 'todo'"
+        :current-title="managingTask.type === 'edit' ? tasks?.find((f) => f.id === managingTask.id)!.title : ''"
+        :current-description="managingTask.type === 'edit' ? tasks?.find((f) => f.id === managingTask.id)!.description : ''"
+        :current-type="managingTask.type === 'edit' ? tasks?.find((f) => f.id === managingTask.id)!.type : 'todo'"
         @cancel="managingTask.type = 'none'"
         @done="handleTaskManageComplete"
     />
@@ -141,3 +156,4 @@ const handleTaskManageComplete = (payload: any) => {
 @tailwind components;
 @tailwind utilities;
 </style>
+./hooks/useApiCall
